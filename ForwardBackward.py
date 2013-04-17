@@ -22,33 +22,47 @@ def forward_backward(o, z, q, e, a, elem_size=np.longdouble):
 
    """
 
+   #import pdb; pdb.set_trace()
    # forward part
    alpha = np.zeros((z, len(o)), dtype=elem_size)
 
+   scale_const = list()
+   # iterate by columns
    for i, x_i in enumerate(o):
+
       for state in range(0,z):
          if i == 0:
             prev_fsum = a[state]
          else:
             prev_fsum = sum(alpha[k,i-1]*q[k,state] for k in range(0,z))
-         alpha[state,i] = e[state, x_i] * prev_fsum
+         alpha[state,i] = (e[state, x_i] * prev_fsum)
+
+      # normalize alpha by rowsums -> with a total alpha for each time: 1.0
+      # normalization (by division) to avoid overflow due to multiplication of small numbers!
+      statesum = sum([alpha[state,i] for state in range(z)])
+      for state in range(z):
+         alpha[state,i] = alpha[state,i] / statesum
+      scale_const.append(statesum)
 
    prob_fw = sum(alpha[:,-1])
+
    print "prob_fw:" + str(prob_fw)
    print "Alpha Matrix:"
    print alpha
 
 
-   #import pdb; pdb.set_trace()
-
    # backward part
    beta = np.zeros((z, len(o)),dtype=elem_size)
-   for s in xrange(z):
+   for s in range(z):
       beta[s, len(o)-1] = 1
-   for t in xrange(len(o)-2,-1,-1):
-      for i in xrange(z):
-         for j in xrange(z):
+   for t in range(len(o)-2,-1,-1):
+      for i in range(z):
+         for j in range(z):
             beta[i, t] += q[i,j] * e[j][o[t+1]] * beta[j,t+1]
+
+      for state in range(z):
+         # normalize with scaling constant from forward mat (alpha)
+         beta[state, t] = beta[state, t]/scale_const[t+1]
 
    # double check, the prob of bw and fw should be the same
    prob_bw = sum(a[state] * e[state, o[0]] * beta[state,0]for state in range(0,z))
@@ -57,8 +71,9 @@ def forward_backward(o, z, q, e, a, elem_size=np.longdouble):
    print beta
 
    # forward/backward
-   phi = (alpha * beta)/prob_fw
+   phi = (alpha * beta)
    print "Phi Matrix:"
+   print phi
    return phi
 
 class TestFwdBwd(unittest.TestCase):
@@ -81,10 +96,9 @@ class TestFwdBwd(unittest.TestCase):
       phi_mat = forward_backward(o, 2, q, e, a)
       target_phi = np.array([[0.65753425, 0.48097412, 0.81722114], [0.34246575, 0.51902588, 0.18277886]])
       prob_fw = 0.11497500000000001373
-      # self.assertEqual(for_mat, prob_fw)
-
       # compare two numpy arrays
-      npt.assert_almost_equal(phi_mat, target_phi, decimal = 5)
+      npt.assert_almost_equal(phi_mat, target_phi, decimal = 7)
+
 
 if __name__== '__main__':
    unittest.main()
