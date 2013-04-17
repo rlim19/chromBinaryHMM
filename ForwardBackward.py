@@ -5,9 +5,11 @@
 # emission : binary (0/1) #
 ###########################
 
+import unittest
 import numpy as np
 import math
 import os
+import numpy.testing as npt
 
 
 def forward_backward(o, z, q, e, a, elem_size=np.longdouble):
@@ -57,24 +59,32 @@ def forward_backward(o, z, q, e, a, elem_size=np.longdouble):
    # forward/backward
    phi = (alpha * beta)/prob_fw
    print "Phi Matrix:"
-   print phi
+   return phi
 
+class TestFwdBwd(unittest.TestCase):
+   def test_fwdbw(self):
+      # for test purpose (Toy example)
+      # get the obs.data, returned as np array objects
+      o = np.genfromtxt("profile2.test", names=True, delimiter="\t")
+      o = o['001']
+
+      # random_transition  = np.random.uniform(0,1, size = state*state).reshape(state,state)
+      # e.g transition, row and col index start with 0
+      q = np.array([[0.8,0.2], [0.5,0.5]])
+
+      # random_emission = np.random.uniform(0,1, size = 2*state).reshape(state,2)
+      e = np.array([[0.2,0.8], [0.7,0.3]])  #binary emission
+
+      # random init_prob = np.random.uniform(0,1,size=1*state).reshape(state,1)
+      a = np.array([[0.5],[0.5]])
+
+      phi_mat = forward_backward(o, 2, q, e, a)
+      target_phi = np.array([[0.65753425, 0.48097412, 0.81722114], [0.34246575, 0.51902588, 0.18277886]])
+      prob_fw = 0.11497500000000001373
+      # self.assertEqual(for_mat, prob_fw)
+
+      # compare two numpy arrays
+      npt.assert_almost_equal(phi_mat, target_phi, decimal = 5)
 
 if __name__== '__main__':
-
-   # for test purpose (Toy example)
-   # get the obs.data, returned as np array objects
-   o = np.genfromtxt("profile2.test", names=True, delimiter="\t")
-   o = o['001']
-
-   # random_transition  = np.random.uniform(0,1, size = state*state).reshape(state,state)
-   # e.g transition, row and col index start with 0
-   q = np.array([[0.8,0.2], [0.5,0.5]])
-
-   # random_emission = np.random.uniform(0,1, size = 2*state).reshape(state,2)
-   e = np.array([[0.2,0.8], [0.7,0.3]])  #binary emission
-
-   # random init_prob = np.random.uniform(0,1,size=1*state).reshape(state,1)
-   a = np.array([[0.5],[0.5]])
-
-   for_mat = forward_backward(o, 2, q, e, a)
+   unittest.main()
