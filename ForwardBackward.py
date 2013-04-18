@@ -12,7 +12,7 @@ import os
 import unittest
 import numpy.testing as npt
 
-def forward_backward(obs, no_states, trans, emm, a0, elem_size=np.longdouble):
+def ForwardBackward(obs, no_states, trans, emm, a0, elem_size=np.longdouble):
    """
    obs       : observed data
    no_states : no.hidden states
@@ -23,6 +23,10 @@ def forward_backward(obs, no_states, trans, emm, a0, elem_size=np.longdouble):
    output:
    - phi matrix, the probability of being in state k, at each t step
      given the obs.sequence
+
+   Normalization according to :
+      Inference in Hidden Markov Models (Ryden, et al.): page 123
+   Normalization is required to avoid overflow upon interation of E-step
    """
 
    # for debugging
@@ -56,33 +60,40 @@ def forward_backward(obs, no_states, trans, emm, a0, elem_size=np.longdouble):
       scale_const.append(statesum)
 
    #prob_fw = sum(alpha[:,-1])
+   #print "prob_fw:\n"
+   #print prob_fw
 
    #################
    # backward part #
    #################
+   #import pdb; pdb.set_trace()
    beta = np.zeros((no_states, len(obs)),dtype=elem_size)
 
    # fill backward from the last obs.sequence
    for state in range(no_states):
-      beta[state, len(obs)-1] = 1
+      #beta[state, len(obs)-1] = 1
+      beta[state, len(obs)-1] = scale_const[-1]
 
    # t is the time step of the obs.sequence
    for t in range(len(obs)-2,-1,-1):
       # transition from i[t] to j[t+1] 
       for i in range(no_states):
          for j in range(no_states):
-            beta[i, t] += trans[i,j] * emm[j][obs[t+1]] * beta[j,t+1]
+            beta[i, t] += (trans[i,j] * emm[j, obs[t+1]] * beta[j,t+1])/scale_const[t]
 
-      for state in range(no_states):
-         # normalize with scaling constant from forward mat (alpha)
-         beta[state, t] = beta[state, t]/scale_const[t+1]
 
    # double check, the prob of bw and fw should be the same
    #prob_bw = sum(a0[state] * emm[state, obs[0]] * beta[state,0]for state in range(no_states))
+   #print "prob_bw:\n"
+   #print prob_bw
+
 
    # forward/backward
    phi = (alpha * beta)
-   return phi
+   colsum = np.matrix(phi).sum(axis=0)
+   phi = np.matrix(phi)/colsum 
+
+   return (alpha, beta, phi, scale_const)
 
 class TestFwdBwd(unittest.TestCase):
    def test_fwdbw(self):
@@ -101,11 +112,11 @@ class TestFwdBwd(unittest.TestCase):
       # random init_prob = np.random.uniform(0,1,size=1*state).reshape(state,1)
       a0 = np.array([[0.5],[0.5]])
 
-      phi_mat = forward_backward(obs, 2, trans, emm, a0)
+      (alpha, beta, phi, scale_const) = ForwardBackward(obs, 2, trans, emm, a0)
       target_phi = np.array([[0.65753425, 0.48097412, 0.81722114], [0.34246575, 0.51902588, 0.18277886]])
-      
+
       # compare two numpy arrays
-      npt.assert_almost_equal(phi_mat, target_phi, decimal = 7)
+      npt.assert_almost_equal(phi, target_phi, decimal = 7)
 
 if __name__== '__main__':
    unittest.main()
