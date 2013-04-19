@@ -58,6 +58,7 @@ def ForwardBackward(obs, no_states, trans, emm, a0, elem_size=np.longdouble):
       for state in range(no_states):
          alpha[state,t] = alpha[state,t] / statesum
       scale_const.append(statesum)
+   alpha = np.nan_to_num(alpha)
 
    #prob_fw = sum(alpha[:,-1])
    #print "prob_fw:\n"
@@ -87,11 +88,14 @@ def ForwardBackward(obs, no_states, trans, emm, a0, elem_size=np.longdouble):
    #print "prob_bw:\n"
    #print prob_bw
 
+   beta = np.nan_to_num(beta)
+
 
    # forward/backward
-   phi = (alpha * beta)
-   colsum = np.matrix(phi).sum(axis=0)
-   phi = np.matrix(phi)/colsum
+   phi = np.matrix((alpha * beta), dtype= elem_size)
+   colsum = np.matrix(np.matrix(phi).sum(axis=0), dtype = elem_size)
+   phi = np.matrix(np.matrix(phi)/colsum, dtype = elem_size)
+   phi = np.nan_to_num(phi)
 
    return (alpha, beta, phi, scale_const)
 
