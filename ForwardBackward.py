@@ -91,7 +91,7 @@ def ForwardBackward(obs, no_states, trans, emm, a0, elem_size=np.longdouble):
    # forward/backward
    phi = (alpha * beta)
    colsum = np.matrix(phi).sum(axis=0)
-   phi = np.matrix(phi)/colsum 
+   phi = np.matrix(phi)/colsum
 
    return (alpha, beta, phi, scale_const)
 
@@ -104,16 +104,20 @@ class TestFwdBwd(unittest.TestCase):
 
       # random_transition  = np.random.uniform(0,1, size = state*state).reshape(state,state)
       # e.g transition, row and col index start with 0
-      trans = np.array([[0.8,0.2], [0.5,0.5]])
+      trans = np.array([[0.8,0.2], 
+                        [0.5,0.5]])
 
       # random_emission = np.random.uniform(0,1, size = 2*state).reshape(state,2)
-      emm = np.array([[0.2,0.8], [0.7,0.3]])  #binary emission
+      emm = np.array([[0.2,0.8], 
+                      [0.7,0.3]])  #binary emission
 
       # random init_prob = np.random.uniform(0,1,size=1*state).reshape(state,1)
-      a0 = np.array([[0.5],[0.5]])
+      a0 = np.array([[0.5],
+                     [0.5]])
 
       (alpha, beta, phi, scale_const) = ForwardBackward(obs, 2, trans, emm, a0)
-      target_phi = np.array([[0.65753425, 0.48097412, 0.81722114], [0.34246575, 0.51902588, 0.18277886]])
+      target_phi = np.array([[0.65753425, 0.48097412, 0.81722114], 
+                             [0.34246575, 0.51902588, 0.18277886]])
 
       # compare two numpy arrays
       npt.assert_almost_equal(phi, target_phi, decimal = 7)
