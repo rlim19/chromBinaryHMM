@@ -29,13 +29,13 @@ def emmEstimate( obs, phi_matrix, elem_size= np.longdouble ):
    sum_phi = np.matrix(np.matrix(phi_matrix).sum(axis=1), dtype=elem_size)
    np.seterr(invalid='ignore')
    emm_estimated1 = np.matrix(emm_estimated1/sum_phi, dtype=elem_size)
-   emm_estimated1 = np.nan_to_num(emm_estimated1)
+   #emm_estimated1 = np.nan_to_num(emm_estimated1)
 
    # estimated emission for 0
    emm_estimated0 = np.matrix(1 - np.matrix(emm_estimated1), dtype=elem_size)
    # combine emission for 0 and 1 together
    emm_estimated = np.matrix(np.concatenate((emm_estimated0, emm_estimated1), axis = 1), dtype=elem_size)
-   emm_estimated = np.nan_to_num(emm_estimated)
+   #emm_estimated = np.nan_to_num(emm_estimated)
 
    return emm_estimated
 
@@ -56,7 +56,7 @@ def transEstimate(alpha, beta, trans, emm, no_states, obs,  elem_size = np.longd
    # normalizing by row to get the transition prob
    row_sum = np.matrix(new_trans.sum(axis=1), dtype = elem_size)
    new_trans = np.matrix(new_trans/row_sum, dtype=elem_size)
-   new_trans = np.nan_to_num(new_trans)
+   #new_trans = np.nan_to_num(new_trans)
 
    return new_trans
 
@@ -79,7 +79,7 @@ def transNormEstimate(alpha, beta, scale_const, trans, emm, no_states, obs,  ele
    row_sum = np.matrix(new_trans.sum(axis=1), dtype=elem_size)
    np.seterr(invalid='ignore')
    new_trans = np.matrix(new_trans/row_sum, dtype=elem_size)
-   new_trans = np.nan_to_num(new_trans)
+   #new_trans = np.nan_to_num(new_trans)
 
    return new_trans
 
